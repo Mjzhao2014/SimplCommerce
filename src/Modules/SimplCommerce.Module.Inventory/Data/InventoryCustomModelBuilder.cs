@@ -9,6 +9,10 @@ namespace SimplCommerce.Module.Inventory.Data
         public void Build(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<Warehouse>().HasData(new Warehouse(1) { Name = "Default warehouse", AddressId = 1 });
+
+            modelBuilder.Entity<Stock>()
+                .Property(x => x.RowVersion)
+                .IsRowVersion();
         }
     }
 }

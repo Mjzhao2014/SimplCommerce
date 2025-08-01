@@ -1,5 +1,6 @@
 ﻿using SimplCommerce.Infrastructure.Models;
 using SimplCommerce.Module.Catalog.Models;
+using System.ComponentModel.DataAnnotations;
 
 namespace SimplCommerce.Module.Inventory.Models
 {
@@ -16,5 +17,8 @@ namespace SimplCommerce.Module.Inventory.Models
         public int Quantity { get; set; }
 
         public int ReservedQuantity { get; set; }
+
+        [Timestamp]
+        public byte[] RowVersion { get; set; }
     }
 }

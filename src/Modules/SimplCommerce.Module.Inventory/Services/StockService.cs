@@ -68,7 +68,15 @@ namespace SimplCommerce.Module.Inventory.Services
             };
 
             _stockHistoryRepository.Add(stockHistory);
-            await _stockHistoryRepository.SaveChangesAsync();
+
+            try
+            {
+                await _stockHistoryRepository.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                throw;
+            }
 
             if (prevStockQuantity <= 0 && product.StockQuantity > 0)
             {

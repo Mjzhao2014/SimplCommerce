@@ -1,4 +1,5 @@
 ﻿using System;
+using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -87,6 +88,30 @@ namespace SimplCommerce.Module.Inventory.Tests
             Assert.Equal(Math.Max(0, prevStockQuantity + adjustedQuantity), newStockQuantity);
         }
 
+        [Fact]
+        public async Task UpdateStock_SaveChangesThrowsConcurrency_ShouldPropagateException()
+        {
+            // Arrange
+            InitializeMocks(1, 1);
+            _stockHistoryRepoMock.Setup(x => x.SaveChangesAsync()).ThrowsAsync(new DbUpdateConcurrencyException());
+            var service = new StockService(
+                _stockRepoMock.Object,
+                _productRepoMock.Object,
+                _stockHistoryRepoMock.Object,
+                _mediatorMock.Object);
+
+            var product = _productRepoMock.Object.Query().First();
+            var request = new StockUpdateRequest
+            {
+                AdjustedQuantity = 1,
+                ProductId = product.Id,
+                WarehouseId = _testWarehouse.Id,
+            };
+
+            // Act & Assert
+            await Assert.ThrowsAsync<DbUpdateConcurrencyException>(() => service.UpdateStock(request));
+        }
+
         private void InitializeMocks(int productsCount, int stocksCount)
         {
             _stockRepoMock = new Mock<IRepository<Stock>>();
@@ -105,6 +130,7 @@ namespace SimplCommerce.Module.Inventory.Tests
             _stockRepoMock.Setup(x => x.Query())
                 .Returns(stocksMock);
             _stockRepoMock.Setup(x => x.AddRange(It.IsAny<IEnumerable<Stock>>()));
+            _stockRepoMock.Setup(x => x.SaveChangesAsync()).Returns(Task.CompletedTask);
 
             _productRepoMock = new Mock<IRepository<Product>>();
             var products = new Product[productsCount];
@@ -118,6 +144,9 @@ namespace SimplCommerce.Module.Inventory.Tests
             _productRepoMock
                 .Setup(x => x.Query())
                 .Returns(productsMock);
+
+            _stockHistoryRepoMock.Setup(x => x.Add(It.IsAny<StockHistory>()));
+            _stockHistoryRepoMock.Setup(x => x.SaveChangesAsync()).Returns(Task.CompletedTask);
 
             _mediatorMock
                 .Setup(m => m.Send(It.IsAny<ProductBackInStock>(), It.IsAny<CancellationToken>()))
