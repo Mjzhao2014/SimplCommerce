@@ -52,6 +52,9 @@ namespace SimplCommerce.Module.Catalog.Models
 
         public long? VendorId { get; set; }
 
+        [Timestamp]
+        public byte[] RowVersion { get; set; }
+
         public Media ThumbnailImage { get; set; }
 
         public IList<ProductMedia> Medias { get; protected set; } = new List<ProductMedia>();
