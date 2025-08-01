@@ -212,6 +212,8 @@ namespace SimplCommerce.Module.Orders.Services
             };
         using (var transaction = _checkoutItemRepository.BeginTransaction())
         {
+            try
+            {
             foreach (var checkoutItem in checkout.CheckoutItems)
             {
                 if (!checkoutItem.Product.IsAllowToOrder || !checkoutItem.Product.IsPublished || checkoutItem.Product.IsDeleted)
@@ -263,6 +265,12 @@ namespace SimplCommerce.Module.Orders.Services
 
             _checkoutItemRepository.SaveChanges();
             transaction.Commit();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                transaction.Rollback();
+                return Result.Fail<Order>("The product inventory was changed by another order. Please try again.");
+            }
         }
 
             order.OrderStatus = orderStatus;
